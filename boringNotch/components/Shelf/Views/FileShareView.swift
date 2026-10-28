@@ -61,11 +61,6 @@ struct FileShareView: View {
             // Content
             VStack(spacing: 5) {
                 ZStack {
-                    Circle()
-                        .fill(Color.white.opacity(
-                            dropInteraction.dropZoneTargeting ? 0.11 : 0.09
-                        ))
-                        .frame(width: 55, height: 55)
                     Group {
                         if let icon = quickShare.icon(for: selectedProvider.id, size: 34) {
                             Image(nsImage: icon)
@@ -85,11 +80,13 @@ struct FileShareView: View {
                 }
 
                 Text(selectedProvider.id)
-                    .font(.system(.headline, design: .rounded))
+                    .font(.system(.subheadline, design: .rounded).weight(.semibold))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
                     .foregroundColor(.white.opacity(0.8))
                     .multilineTextAlignment(.center)
             }
-            .padding(18)
+            .padding(8)
 
             // Loading overlay
             if isProcessing || quickShare.isPickerOpen {

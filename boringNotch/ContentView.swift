@@ -207,7 +207,7 @@ struct ContentView: View {
             switch activity {
             case .notification:
                 chinWidth += (2 * max(0, vm.effectiveClosedNotchHeight - 12) + 20)
-            case .privacy, .micMuted, .pomodoro, .downloadFinished:
+            case .privacy, .micMuted, .pomodoro, .downloadFinished, .copied:
                 chinWidth += 2 * (activity.toolSideWidth ?? 0) + 8
             case .music:
                 chinWidth += (2 * max(0, displayClosedNotchHeight - 12) + 20 + 2 * liveActivityEdgeMargin + 2)
@@ -464,6 +464,8 @@ struct ContentView: View {
                                   PomodoroLiveActivity(sideWidth: item.toolSideWidth ?? 52)
                               case .downloadFinished:
                                   DownloadLiveActivity(sideWidth: item.toolSideWidth ?? 30)
+                              case .copied:
+                                  CopiedLiveActivity(sideWidth: item.toolSideWidth ?? 52)
                               case .music:
                                   MusicLiveActivity()
                                       .frame(alignment: .center)

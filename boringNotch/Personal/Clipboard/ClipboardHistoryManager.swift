@@ -14,10 +14,13 @@ final class ClipboardHistoryManager: ObservableObject {
     static let shared = ClipboardHistoryManager()
 
     @Published private(set) var history = ClipboardHistory()
+    /// The entry just copied in another app; cleared after a moment.
+    @Published private(set) var justCopied: ClipboardEntry?
 
     private var timer: Timer?
     private var lastChangeCount = NSPasteboard.general.changeCount
     private var saveTask: Task<Void, Never>?
+    private var copiedTask: Task<Void, Never>?
     private static let maxTextLength = 100_000
 
     private let directory: URL = {
@@ -67,6 +70,10 @@ final class ClipboardHistoryManager: ObservableObject {
             let urls = entry.text.split(separator: "\n").map { URL(fileURLWithPath: String($0)) }
             pb.writeObjects(urls as [NSURL])
         }
+        // Our own write: move it to the top without the "Copied" alert.
+        lastChangeCount = pb.changeCount
+        deleteFiles(of: history.insert(entry, limit: Defaults[.clipboardHistoryLimit]))
+        scheduleSave()
         if paste { Self.sendPasteKeystroke() }
     }
 
@@ -133,6 +140,13 @@ final class ClipboardHistoryManager: ObservableObject {
     private func record(_ entry: ClipboardEntry) {
         deleteFiles(of: history.insert(entry, limit: Defaults[.clipboardHistoryLimit]))
         scheduleSave()
+        justCopied = history.entries.first
+        copiedTask?.cancel()
+        copiedTask = Task {
+            try? await Task.sleep(for: .seconds(1.8))
+            guard !Task.isCancelled else { return }
+            justCopied = nil
+        }
     }
 
     // MARK: Persistence

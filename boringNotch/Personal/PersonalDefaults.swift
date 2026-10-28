@@ -39,6 +39,7 @@ extension Defaults.Keys {
     static let clipboardHistoryLimit = Key<Int>("clipboardHistoryLimit", default: 200)
     static let clipboardOCREnabled = Key<Bool>("clipboardOCREnabled", default: true)
     static let clipboardPasteOnSelect = Key<Bool>("clipboardPasteOnSelect", default: false)
+    static let clipboardCopiedAlert = Key<Bool>("clipboardCopiedAlert", default: true)
 
     // MARK: AI usage
     static let aiUsageEnabled = Key<Bool>("aiUsageEnabled", default: true)

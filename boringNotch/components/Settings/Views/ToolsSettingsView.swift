@@ -92,6 +92,9 @@ struct ToolsSettingsView: View {
                 Defaults.Toggle(key: .clipboardHistoryEnabled) {
                     Text("Keep clipboard history")
                 }
+                Defaults.Toggle(key: .clipboardCopiedAlert) {
+                    Text("Show \"Copied\" in the notch")
+                }
                 Defaults.Toggle(key: .clipboardOCREnabled) {
                     Text("Recognize text in copied images")
                 }
