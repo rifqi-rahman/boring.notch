@@ -26,7 +26,7 @@ struct ToolsView: View {
 }
 
 /// Rounded dark card shared by every tile.
-private struct ToolTile<Content: View>: View {
+struct ToolTile<Content: View>: View {
     @ViewBuilder var content: Content
 
     var body: some View {

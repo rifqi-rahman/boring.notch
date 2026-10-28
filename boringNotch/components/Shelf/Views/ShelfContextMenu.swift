@@ -30,6 +30,9 @@ struct Strings {
     static let convertImage = String(localized: "Convert Image…", comment: "Context menu item: Convert Image…")
     static let createPDF = String(localized: "Create PDF", comment: "Context menu item: Create PDF")
     static let compress = String(localized: "Compress", comment: "Context menu item: Compress")
+    static let extract = String(localized: "Extract", comment: "Context menu item: Extract")
+    static let pdfToImages = String(localized: "Convert PDF to Images", comment: "Context menu item: Convert PDF to Images")
+    static let copyText = String(localized: "Copy Text (OCR)", comment: "Context menu item: Copy Text (OCR)")
     static let rename = String(localized: "Rename", comment: "Context menu item: Rename")
     static let copy = String(localized: "Copy", comment: "Context menu item: Copy")
     static let copyPath = String(localized: "Copy Path", comment: "Context menu item: Copy Path")
@@ -49,6 +52,9 @@ enum ContextMenuAction: String {
     case convertImage
     case createPDF
     case compress
+    case extract
+    case pdfToImages
+    case copyText
 }
 
 @MainActor
@@ -197,6 +203,10 @@ static func present(
             imageSubmenu.addItem(convertItem)
         }
 
+        let copyText = NSMenuItem(title: Strings.copyText, action: nil, keyEquivalent: "")
+        copyText.representedObject = ContextMenuAction.copyText.rawValue
+        imageSubmenu.addItem(copyText)
+
         // Create PDF - for one or more images
         let createPDF = NSMenuItem(title: Strings.createPDF, action: nil, keyEquivalent: "")
         createPDF.representedObject = ContextMenuAction.createPDF.rawValue
@@ -212,6 +222,12 @@ static func present(
         let compressItem = NSMenuItem(title: Strings.compress, action: nil, keyEquivalent: "")
         compressItem.representedObject = ContextMenuAction.compress.rawValue
         menu.addItem(compressItem)
+    }
+    if selectedFileURLs.contains(where: ShelfExtrasService.isArchive) {
+        addMenuItem(title: Strings.extract, contextAction: .extract)
+    }
+    if selectedFileURLs.contains(where: ShelfExtrasService.isPDF) {
+        addMenuItem(title: Strings.pdfToImages, contextAction: .pdfToImages)
     }
 
     if selectedItems.count == 1, case .file = item.kind { addMenuItem(title: Strings.rename, contextAction: .rename) }
@@ -468,6 +484,41 @@ private final class MenuActionTarget: NSObject {
                         NSWorkspace.shared.activateFileViewerSelecting([zipTempURL])
                     }
                 }
+            }
+
+        case .extract?:
+            let urls = ShelfSelectionModel.shared.selectedItems(in: ShelfStateViewModel.shared.items)
+                .compactMap { $0.fileURL }.filter(ShelfExtrasService.isArchive)
+            Task {
+                for url in urls {
+                    let out = await url.accessSecurityScopedResource(accessor: { _ in await ShelfExtrasService.extract(url) })
+                    ShelfExtrasService.addToShelf(out)
+                }
+            }
+
+        case .pdfToImages?:
+            let urls = ShelfSelectionModel.shared.selectedItems(in: ShelfStateViewModel.shared.items)
+                .compactMap { $0.fileURL }.filter(ShelfExtrasService.isPDF)
+            Task {
+                for url in urls {
+                    let out = await url.accessSecurityScopedResource(accessor: { _ in await ShelfExtrasService.renderPages(of: url) })
+                    ShelfExtrasService.addToShelf(out)
+                }
+            }
+
+        case .copyText?:
+            let urls = ShelfSelectionModel.shared.selectedItems(in: ShelfStateViewModel.shared.items)
+                .compactMap { $0.fileURL }.filter { ImageProcessingService.shared.isImageFile($0) }
+            Task {
+                var texts: [String] = []
+                for url in urls {
+                    if let text = await url.accessSecurityScopedResource(accessor: { _ in await ShelfExtrasService.recognizeText(in: url) }) {
+                        texts.append(text)
+                    }
+                }
+                guard !texts.isEmpty else { NSSound.beep(); return }
+                NSPasteboard.general.clearContents()
+                NSPasteboard.general.setString(texts.joined(separator: "\n\n"), forType: .string)
             }
 
         case .none:

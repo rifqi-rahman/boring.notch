@@ -32,6 +32,7 @@ struct ShortcutsSettingsView: View {
                 KeyboardShortcuts.Recorder("Toggle Mic Mute:", name: .toggleMicMute)
                 KeyboardShortcuts.Recorder("Toggle Caffeine:", name: .toggleCaffeine)
                 KeyboardShortcuts.Recorder("Start/Pause Pomodoro:", name: .togglePomodoro)
+                KeyboardShortcuts.Recorder("Open Clipboard History:", name: .openClipboard)
             } header: {
                 Text("Tools")
             }

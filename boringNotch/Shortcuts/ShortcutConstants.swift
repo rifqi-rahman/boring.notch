@@ -15,6 +15,7 @@ extension KeyboardShortcuts.Name {
 
 extension KeyboardShortcuts.Name {
     static let toggleMicMute = Self("toggleMicMute")
+    static let openClipboard = Self("openClipboard")
     static let toggleCaffeine = Self("toggleCaffeine")
     static let togglePomodoro = Self("togglePomodoro")
 }
