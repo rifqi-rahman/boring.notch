@@ -11,6 +11,8 @@ import SwiftUI
 
 struct ToolsView: View {
     @Default(.showSystemStats) private var showSystemStats
+    @Default(.deviceBatteryEnabled) private var showDeviceBattery
+    @ObservedObject private var batteries = DeviceBatteryManager.shared
 
     var body: some View {
         HStack(spacing: 10) {
@@ -18,6 +20,9 @@ struct ToolsView: View {
             QuickTogglesTile()
             if showSystemStats {
                 SystemStatsTile()
+            }
+            if showDeviceBattery && !batteries.devices.isEmpty {
+                DeviceBatteryTile(devices: batteries.devices)
             }
         }
         .padding(.top, 4)
@@ -242,6 +247,34 @@ private struct StatBar: View {
         case ..<0.6: .green
         case ..<0.85: .yellow
         default: .red
+        }
+    }
+}
+
+// MARK: - Device batteries
+
+private struct DeviceBatteryTile: View {
+    let devices: [DeviceBattery]
+
+    var body: some View {
+        ToolTile {
+            VStack(alignment: .leading, spacing: 7) {
+                ForEach(devices.prefix(4)) { device in
+                    HStack(spacing: 6) {
+                        Image(systemName: device.symbol)
+                            .frame(width: 16)
+                        Text(device.name)
+                            .lineLimit(1)
+                            .truncationMode(.tail)
+                        Spacer(minLength: 4)
+                        Text("\(device.percent)%")
+                            .monospacedDigit()
+                            .foregroundStyle(device.percent <= Defaults[.deviceBatteryLowThreshold] ? .red : .secondary)
+                    }
+                    .font(.system(size: 11, weight: .medium))
+                }
+                Spacer(minLength: 0)
+            }
         }
     }
 }

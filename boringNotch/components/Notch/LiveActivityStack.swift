@@ -27,6 +27,8 @@ enum LiveActivityItem: Identifiable, Equatable {
     case pomodoro
     case downloadFinished
     case copied
+    case call
+    case lowDeviceBattery
     case music
 
     var id: String {
@@ -37,6 +39,8 @@ enum LiveActivityItem: Identifiable, Equatable {
         case .pomodoro: "pomodoro"
         case .downloadFinished: "downloadFinished"
         case .copied: "copied"
+        case .call: "call"
+        case .lowDeviceBattery: "lowDeviceBattery"
         case .music: "music"
         }
     }

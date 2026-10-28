@@ -21,6 +21,8 @@ final class AIUsageManager: ObservableObject {
     private var timer: Timer?
     private var lastRefresh: Date?
     private var claudeToken: (value: String, expires: Date?)?
+    /// Set when the user denies the Keychain prompt; cleared by a manual refresh.
+    private var claudeKeychainDenied = false
 
     private init() {}
 
@@ -48,6 +50,12 @@ final class AIUsageManager: ObservableObject {
     func refreshIfStale(maxAge: TimeInterval = 60) {
         if let lastRefresh, Date().timeIntervalSince(lastRefresh) < maxAge { return }
         Task { await refresh() }
+    }
+
+    /// Manual refresh from the AI tab: also retries a denied Keychain prompt.
+    func userRefresh() async {
+        claudeKeychainDenied = false
+        await refresh()
     }
 
     func refresh() async {
@@ -79,7 +87,7 @@ final class AIUsageManager: ObservableObject {
     // MARK: Claude
 
     private func fetchClaude() async throws -> ProviderUsage {
-        let token = try claudeAccessToken()
+        let token = try await claudeAccessToken()
         var request = URLRequest(url: URL(string: "https://api.anthropic.com/api/oauth/usage")!)
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         request.setValue("oauth-2025-04-20", forHTTPHeaderField: "anthropic-beta")
@@ -88,11 +96,14 @@ final class AIUsageManager: ObservableObject {
         return ProviderUsage(provider: .claude, windows: try AIUsageParser.parseClaude(data))
     }
 
-    private func claudeAccessToken() throws -> String {
+    private func claudeAccessToken() async throws -> String {
         if let cached = claudeToken, (cached.expires ?? .distantFuture) > Date() {
             return cached.value
         }
-        let data = Self.keychainPassword(service: "Claude Code-credentials")
+        guard !claudeKeychainDenied else { throw UsageError("Keychain access denied, tap refresh") }
+        let keychain = await Self.keychainPassword(service: "Claude Code-credentials")
+        if keychain == nil { claudeKeychainDenied = true }
+        let data = keychain
             ?? (try? Data(contentsOf: FileManager.default.homeDirectoryForCurrentUser
                 .appendingPathComponent(".claude/.credentials.json")))
         guard let data,
@@ -194,16 +205,16 @@ final class AIUsageManager: ObservableObject {
         }
     }
 
-    private static func keychainPassword(service: String) -> Data? {
-        let query: [String: Any] = [
-            kSecClass as String: kSecClassGenericPassword,
-            kSecAttrService as String: service,
-            kSecReturnData as String: true,
-            kSecMatchLimit as String: kSecMatchLimitOne,
-        ]
-        var result: CFTypeRef?
-        guard SecItemCopyMatching(query as CFDictionary, &result) == errSecSuccess else { return nil }
-        return result as? Data
+    /// Reads the item through Apple's `security` tool rather than the
+    /// Security framework: the Keychain then remembers "Always Allow" for that
+    /// stable, Apple-signed binary, instead of for this ad-hoc signed app whose
+    /// signature changes on every build and so prompts again each time.
+    private static func keychainPassword(service: String) async -> Data? {
+        await Task.detached {
+            guard let output = run("/usr/bin/security", ["find-generic-password", "-s", service, "-w"]) else { return nil }
+            let trimmed = output.trimmingCharacters(in: .whitespacesAndNewlines)
+            return trimmed.isEmpty ? nil : Data(trimmed.utf8)
+        }.value
     }
 
     nonisolated private static func run(_ path: String, _ args: [String]) -> String? {
