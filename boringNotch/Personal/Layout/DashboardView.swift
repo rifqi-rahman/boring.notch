@@ -47,7 +47,8 @@ struct DashboardView: View {
 // MARK: - Cards
 
 /// Bento card: rounded tile that opens a tab on tap.
-private struct BentoCard<Content: View>: View {
+struct BentoCard<Content: View>: View {
+    @EnvironmentObject private var vm: BoringViewModel
     var destination: NotchViews?
     @ViewBuilder var content: Content
 
@@ -59,7 +60,10 @@ private struct BentoCard<Content: View>: View {
             .contentShape(RoundedRectangle(cornerRadius: 12))
             .onTapGesture {
                 if let destination {
-                    withAnimation(.smooth) { BoringViewCoordinator.shared.currentView = destination }
+                    withAnimation(.smooth) {
+                        BoringViewCoordinator.shared.currentView = destination
+                        vm.openSize = .large
+                    }
                 }
             }
     }
@@ -135,7 +139,7 @@ private struct ShortcutsCard: View {
     }
 }
 
-private struct WeekCard: View {
+struct WeekCard: View {
     @ObservedObject private var calendar = CalendarManager.shared
 
     private var weekDays: [Date] {
@@ -151,7 +155,7 @@ private struct WeekCard: View {
     }
 
     var body: some View {
-        BentoCard(destination: nil) {
+        BentoCard(destination: .calendar) {
             VStack(alignment: .leading, spacing: 6) {
                 HStack(spacing: 0) {
                     ForEach(weekDays, id: \.self) { day in
@@ -237,7 +241,7 @@ private struct AIUsageCard: View {
     }
 }
 
-private struct TodoCard: View {
+struct TodoCard: View {
     @ObservedObject private var store = TodoStore.shared
     @State private var draft = ""
     @State private var adding = false

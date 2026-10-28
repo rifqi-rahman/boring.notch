@@ -17,13 +17,12 @@ struct MediumNotchView: View {
     let albumArtNamespace: Namespace.ID
     let horizontalMediaGestureFeedback: CGFloat
 
-    private enum Content { case call, music, timer, overview }
+    private enum Content { case call, music, overview }
 
+    /// A call or playing music takes over the glance; otherwise the overview.
     private var content: Content {
         if call.callApp != nil, Defaults[.callIslandEnabled] { return .call }
         if music.isPlaying { return .music }
-        if pomodoro.isActive { return .timer }
-        if !music.isPlayerIdle { return .music }
         return .overview
     }
 
@@ -35,10 +34,8 @@ struct MediumNotchView: View {
             CompactHomeView(albumArtNamespace: albumArtNamespace,
                             horizontalMediaGestureFeedback: horizontalMediaGestureFeedback)
                 .frame(width: 336)
-        case .timer:
-            TimerGlance().frame(width: 336)
         case .overview:
-            OverviewGlance().frame(width: 360)
+            OverviewGlance().frame(width: 540)
         }
     }
 }
@@ -75,73 +72,96 @@ private struct CallGlance: View {
     }
 }
 
-private struct TimerGlance: View {
-    @ObservedObject private var pomodoro = PomodoroManager.shared
-
-    var body: some View {
-        HStack(spacing: 12) {
-            ZStack {
-                Circle().stroke(Color.white.opacity(0.12), lineWidth: 4)
-                Circle()
-                    .trim(from: 0, to: pomodoro.progress)
-                    .stroke(color, style: StrokeStyle(lineWidth: 4, lineCap: .round))
-                    .rotationEffect(.degrees(-90))
-                Image(systemName: pomodoro.cycle.phase.symbol)
-                    .font(.system(size: 13))
-                    .foregroundStyle(color)
-            }
-            .frame(width: 40, height: 40)
-            VStack(alignment: .leading, spacing: 0) {
-                Text(pomodoro.cycle.phase.label)
-                    .font(.system(size: 11))
-                    .foregroundStyle(.secondary)
-                Text(pomodoro.remainingText)
-                    .font(.system(size: 22, weight: .semibold, design: .rounded))
-                    .monospacedDigit()
-                    .contentTransition(.numericText())
-            }
-            Spacer()
-            CircleAction(icon: pomodoro.isRunning ? "pause.fill" : "play.fill", tint: .white) {
-                pomodoro.startOrPause()
-            }
-            CircleAction(icon: "forward.end.fill", tint: .white) { pomodoro.skip() }
-        }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 12)
-    }
-
-    private var color: Color { pomodoro.cycle.phase == .focus ? .effectiveAccent : .green }
-}
-
+/// Default hover glance: next events, to-do, and shortcuts.
 private struct OverviewGlance: View {
-    @ObservedObject private var ai = AIUsageManager.shared
+    @EnvironmentObject private var vm: BoringViewModel
     @ObservedObject private var pomodoro = PomodoroManager.shared
+    @ObservedObject private var caffeine = CaffeineManager.shared
 
     var body: some View {
-        HStack(spacing: 14) {
-            VStack(alignment: .leading, spacing: 0) {
-                Text(Date.now.formatted(.dateTime.weekday(.wide)))
-                    .font(.system(size: 11))
-                    .foregroundStyle(.secondary)
-                Text(Date.now.formatted(.dateTime.day().month(.abbreviated)))
-                    .font(.system(size: 18, weight: .semibold, design: .rounded))
-            }
-            if let usage = ai.activeUsage.first {
-                VStack(alignment: .leading, spacing: 3) {
-                    Text("\(usage.provider.name) \(Int(usage.peakPercent))%")
-                        .font(.system(size: 11, weight: .medium))
-                    ProgressView(value: min(usage.peakPercent / 100, 1))
-                        .tint(usage.peakPercent < 60 ? .green : usage.peakPercent < 85 ? .orange : .red)
-                        .frame(width: 90)
+        HStack(spacing: 8) {
+            WeekCard().frame(width: 190)
+            TodoCard().frame(width: 150)
+            VStack(spacing: 6) {
+                timerShortcut
+                HStack(spacing: 6) {
+                    GlanceButton(icon: "cup.and.saucer.fill", on: caffeine.isActive, tint: .orange, help: "Caffeine") {
+                        caffeine.isActive ? caffeine.deactivate()
+                            : caffeine.activate(for: CaffeineManager.Duration(rawValue: Defaults[.caffeineDefaultDuration]) ?? .indefinite)
+                    }
+                    GlanceButton(icon: "computermouse.fill", help: "Devices") { openTab(.tools) }
+                }
+                HStack(spacing: 6) {
+                    GlanceButton(icon: "web.camera.fill", help: "Speaker & Camera") { openTab(.audio) }
+                    GlanceButton(icon: "gearshape.fill", help: "Settings") {
+                        SettingsWindowController.shared.showWindow()
+                    }
                 }
             }
-            Spacer()
-            CircleAction(icon: "timer", tint: .white) { pomodoro.start() }
-                .help("Start focus timer")
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 12)
-        .onAppear { ai.refreshIfStale(maxAge: 300) }
+        .frame(height: 112)
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
+    }
+
+    /// Start when idle; while active shows the countdown with pause, restart and stop.
+    @ViewBuilder
+    private var timerShortcut: some View {
+        if pomodoro.isActive {
+            HStack(spacing: 4) {
+                Button { pomodoro.startOrPause() } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: pomodoro.isRunning ? "pause.fill" : "play.fill")
+                        Text(pomodoro.remainingText).monospacedDigit()
+                    }
+                    .font(.system(size: 11, weight: .semibold))
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .background(RoundedRectangle(cornerRadius: 9).fill(Color.effectiveAccent))
+                    .foregroundStyle(.black)
+                }
+                .buttonStyle(.plain)
+                GlanceButton(icon: "arrow.counterclockwise", help: "Restart") {
+                    pomodoro.reset()
+                    pomodoro.start()
+                }
+                .frame(width: 30)
+                GlanceButton(icon: "xmark", help: "Stop timer") { pomodoro.reset() }
+                    .frame(width: 30)
+            }
+        } else {
+            GlanceButton(icon: "timer", label: "Focus", help: "Start focus timer") { pomodoro.start() }
+        }
+    }
+
+    private func openTab(_ view: NotchViews) {
+        withAnimation(.smooth) {
+            BoringViewCoordinator.shared.currentView = view
+            vm.openSize = .large
+        }
+    }
+}
+
+private struct GlanceButton: View {
+    let icon: String
+    var label: String?
+    var on = false
+    var tint: Color = .white
+    let help: String
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 4) {
+                Image(systemName: icon)
+                if let label { Text(label) }
+            }
+            .font(.system(size: 11, weight: .semibold))
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(RoundedRectangle(cornerRadius: 9).fill(on ? tint : Color.white.opacity(0.07)))
+            .foregroundStyle(on ? Color.black : Color.white.opacity(0.85))
+        }
+        .buttonStyle(.plain)
+        .help(help)
     }
 }
 

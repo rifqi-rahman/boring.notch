@@ -28,6 +28,7 @@ enum NotchViews {
     case timer
     case customize
     case audio
+    case calendar
 }
 
 enum DownloadIndicatorStyle: String, Defaults.Serializable {

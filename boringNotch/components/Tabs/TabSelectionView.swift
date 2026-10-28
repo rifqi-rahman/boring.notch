@@ -23,6 +23,7 @@ var allTabs: [TabModel] {
         TabModel(label: "Home", icon: "house.fill", view: .home),
         TabModel(label: "Music", icon: "music.note", view: .music),
         TabModel(label: "Timer", icon: "timer", view: .timer),
+        TabModel(label: "Calendar", icon: "calendar", view: .calendar),
     ]
     if Defaults[.boringShelf] {
         result.append(TabModel(label: "Shelf", icon: "tray.fill", view: .shelf))
@@ -35,7 +36,7 @@ var allTabs: [TabModel] {
     }
     if Defaults[.showToolsTab] {
         result.append(TabModel(label: "System", icon: "cpu", view: .tools))
-        result.append(TabModel(label: "Audio", icon: "speaker.wave.2.fill", view: .audio))
+        result.append(TabModel(label: "Speaker & Camera", icon: "web.camera.fill", view: .audio))
     }
     return result
 }
