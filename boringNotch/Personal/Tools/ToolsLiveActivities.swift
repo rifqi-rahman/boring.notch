@@ -23,6 +23,8 @@ final class ToolsActivityState: ObservableObject {
     @Published private(set) var micMuted = false
     @Published private(set) var cameraInUse = false
     @Published private(set) var micInUse = false
+    @Published private(set) var downloadFinished = false
+    @Published private(set) var copied = false
 
     private var cancellables = Set<AnyCancellable>()
 
@@ -35,7 +37,11 @@ final class ToolsActivityState: ObservableObject {
             .sink { [weak self] in self?.cameraInUse = $0 }.store(in: &cancellables)
         CameraGuardManager.shared.$micInUse.removeDuplicates()
             .sink { [weak self] in self?.micInUse = $0 }.store(in: &cancellables)
-        Defaults.publisher(keys: .cameraGuardEnabled, .micGuardEnabled, .showMicMutedActivity, .showPomodoroActivity)
+        ClipboardHistoryManager.shared.$justCopied.map { $0 != nil }.removeDuplicates()
+            .sink { [weak self] in self?.copied = $0 }.store(in: &cancellables)
+        DownloadWatcher.shared.$lastFinished.map { $0 != nil }.removeDuplicates()
+            .sink { [weak self] in self?.downloadFinished = $0 }.store(in: &cancellables)
+        Defaults.publisher(keys: .cameraGuardEnabled, .micGuardEnabled, .showMicMutedActivity, .showPomodoroActivity, .downloadAlertsEnabled, .clipboardCopiedAlert)
             .sink { [weak self] _ in self?.objectWillChange.send() }.store(in: &cancellables)
     }
 
@@ -45,6 +51,12 @@ final class ToolsActivityState: ObservableObject {
         let camera = cameraInUse && Defaults[.cameraGuardEnabled]
         // A muted mic that is "running" is not a privacy concern.
         let mic = micInUse && !micMuted && Defaults[.micGuardEnabled]
+        if copied && Defaults[.clipboardCopiedAlert] {
+            items.append(.copied)
+        }
+        if downloadFinished && Defaults[.downloadAlertsEnabled] {
+            items.append(.downloadFinished)
+        }
         if camera || mic {
             items.append(.privacy(camera: camera, mic: mic))
         }
@@ -65,6 +77,8 @@ extension LiveActivityItem {
         case .privacy(let camera, let mic): (camera && mic) ? 44 : 26
         case .micMuted: 26
         case .pomodoro: 52
+        case .downloadFinished: 30
+        case .copied: 52
         default: nil
         }
     }
@@ -160,5 +174,67 @@ struct PomodoroLiveActivity: View {
 
     private var color: Color {
         pomodoro.cycle.phase == .focus ? .effectiveAccent : .green
+    }
+}
+
+struct DownloadLiveActivity: View {
+    @ObservedObject private var watcher = DownloadWatcher.shared
+    let sideWidth: CGFloat
+
+    var body: some View {
+        ToolLiveActivity(sideWidth: sideWidth) {
+            if let url = watcher.lastFinished {
+                Image(nsImage: NSWorkspace.shared.icon(forFile: url.path))
+                    .resizable()
+                    .frame(width: 18, height: 18)
+            }
+        } trailing: {
+            Image(systemName: "arrow.down.circle.fill")
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundStyle(.green)
+        }
+        .contentShape(Rectangle())
+        .onTapGesture { watcher.reveal() }
+        .help(watcher.lastFinished?.lastPathComponent ?? "")
+    }
+}
+
+struct CopiedLiveActivity: View {
+    @ObservedObject private var clipboard = ClipboardHistoryManager.shared
+    let sideWidth: CGFloat
+
+    var body: some View {
+        ToolLiveActivity(sideWidth: sideWidth) {
+            leading
+        } trailing: {
+            Text("Copied")
+                .font(.system(size: 10, weight: .semibold, design: .rounded))
+                .foregroundStyle(.white.opacity(0.85))
+        }
+    }
+
+    @ViewBuilder
+    private var leading: some View {
+        if let entry = clipboard.justCopied, entry.kind == .image,
+           let url = clipboard.imageURL(for: entry), let image = NSImage(contentsOf: url) {
+            Image(nsImage: image)
+                .resizable()
+                .aspectRatio(contentMode: .fill)
+                .frame(width: 20, height: 16)
+                .clipShape(RoundedRectangle(cornerRadius: 3))
+        } else {
+            Image(systemName: symbol)
+                .font(.system(size: 11, weight: .semibold))
+                .foregroundStyle(Color.effectiveAccent)
+        }
+    }
+
+    private var symbol: String {
+        switch clipboard.justCopied?.kind {
+        case .link: "link"
+        case .files: "doc.on.doc.fill"
+        case .image: "photo.fill"
+        default: "doc.on.clipboard.fill"
+        }
     }
 }

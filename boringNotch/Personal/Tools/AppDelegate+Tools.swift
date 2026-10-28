@@ -27,7 +27,30 @@ extension AppDelegate {
             PomodoroManager.shared.startOrPause()
         }
 
+        KeyboardShortcuts.onKeyDown(for: .openClipboard) { [weak self] in
+            guard let self, Defaults[.clipboardHistoryEnabled] else { return }
+            BoringViewCoordinator.shared.currentView = .clipboard
+            if self.vm.notchState == .closed {
+                _ = self.vm.open()
+            }
+        }
+
         _ = ToolsActivityState.shared
+        Task { @MainActor in
+            for await enabled in Defaults.updates(.clipboardHistoryEnabled) {
+                ClipboardHistoryManager.shared.setEnabled(enabled)
+            }
+        }
+        Task { @MainActor in
+            for await _ in Defaults.updates([.aiUsageEnabled, .aiUsageClaude, .aiUsageCodex, .aiUsageAntigravity]) {
+                AIUsageManager.shared.setEnabled(Defaults[.aiUsageEnabled])
+            }
+        }
+        Task { @MainActor in
+            for await enabled in Defaults.updates(.downloadAlertsEnabled) {
+                DownloadWatcher.shared.setEnabled(enabled)
+            }
+        }
         Task { @MainActor in
             for await _ in Defaults.updates([.cameraGuardEnabled, .micGuardEnabled]) {
                 CameraGuardManager.shared.setMonitoring(Defaults[.cameraGuardEnabled] || Defaults[.micGuardEnabled])

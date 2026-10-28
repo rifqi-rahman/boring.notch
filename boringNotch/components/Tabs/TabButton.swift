@@ -15,8 +15,13 @@ struct TabButton: View {
 
     var body: some View {
         Button(action: onClick) {
-            Image(systemName: icon)
-                .padding(.horizontal, 15)
+            HStack(spacing: 5) {
+                Image(systemName: icon)
+                if selected {
+                    Text(label).font(.system(size: 12, weight: .semibold))
+                }
+            }
+            .padding(.horizontal, selected ? 12 : 10)
                 .contentShape(Capsule())
         }
         .buttonStyle(PlainButtonStyle())

@@ -33,4 +33,20 @@ extension Defaults.Keys {
     // MARK: Camera guard
     static let cameraGuardEnabled = Key<Bool>("cameraGuardEnabled", default: true)
     static let micGuardEnabled = Key<Bool>("micGuardEnabled", default: true)
+
+    // MARK: Clipboard history
+    static let clipboardHistoryEnabled = Key<Bool>("clipboardHistoryEnabled", default: true)
+    static let clipboardHistoryLimit = Key<Int>("clipboardHistoryLimit", default: 200)
+    static let clipboardOCREnabled = Key<Bool>("clipboardOCREnabled", default: true)
+    static let clipboardPasteOnSelect = Key<Bool>("clipboardPasteOnSelect", default: false)
+    static let clipboardCopiedAlert = Key<Bool>("clipboardCopiedAlert", default: true)
+
+    // MARK: AI usage
+    static let aiUsageEnabled = Key<Bool>("aiUsageEnabled", default: true)
+    static let aiUsageClaude = Key<Bool>("aiUsageClaude", default: true)
+    static let aiUsageCodex = Key<Bool>("aiUsageCodex", default: true)
+    static let aiUsageAntigravity = Key<Bool>("aiUsageAntigravity", default: false)
+
+    // MARK: Download alerts
+    static let downloadAlertsEnabled = Key<Bool>("downloadAlertsEnabled", default: true)
 }

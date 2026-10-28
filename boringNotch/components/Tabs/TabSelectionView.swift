@@ -24,6 +24,12 @@ var tabs: [TabModel] {
     if Defaults[.showToolsTab] {
         result.append(TabModel(label: "Tools", icon: "square.grid.2x2.fill", view: .tools))
     }
+    if Defaults[.clipboardHistoryEnabled] {
+        result.append(TabModel(label: "Clipboard", icon: "doc.on.clipboard.fill", view: .clipboard))
+    }
+    if Defaults[.aiUsageEnabled] {
+        result.append(TabModel(label: "AI", icon: "gauge.with.dots.needle.67percent", view: .aiUsage))
+    }
     return result
 }
 

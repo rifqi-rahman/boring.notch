@@ -14,6 +14,7 @@ struct ToolsSettingsView: View {
     @Default(.pomodoroShortBreakMinutes) private var shortBreakMinutes
     @Default(.pomodoroLongBreakMinutes) private var longBreakMinutes
     @Default(.pomodoroSessionsBeforeLongBreak) private var sessions
+    @Default(.clipboardHistoryLimit) private var clipboardLimit
     @Default(.caffeineDefaultDuration) private var caffeineDuration
 
     var body: some View {
@@ -85,6 +86,57 @@ struct ToolsSettingsView: View {
                 }
             } header: {
                 Text("Camera Guard")
+            }
+
+            Section {
+                Defaults.Toggle(key: .clipboardHistoryEnabled) {
+                    Text("Keep clipboard history")
+                }
+                Defaults.Toggle(key: .clipboardCopiedAlert) {
+                    Text("Show \"Copied\" in the notch")
+                }
+                Defaults.Toggle(key: .clipboardOCREnabled) {
+                    Text("Recognize text in copied images")
+                }
+                Defaults.Toggle(key: .clipboardPasteOnSelect) {
+                    Text("Paste immediately when choosing an item")
+                }
+                Stepper("Keep \(clipboardLimit) items", value: $clipboardLimit, in: 20...1000, step: 20)
+            } header: {
+                Text("Clipboard")
+            } footer: {
+                Text("Passwords copied from password managers are skipped. Pinned items are never removed. Pasting immediately needs Accessibility permission.")
+                    .foregroundStyle(.secondary)
+                    .font(.caption)
+            }
+
+            Section {
+                Defaults.Toggle(key: .aiUsageEnabled) {
+                    Text("Show AI usage tab")
+                }
+                Defaults.Toggle(key: .aiUsageClaude) {
+                    Text("Claude (uses the Claude Code login)")
+                }
+                Defaults.Toggle(key: .aiUsageCodex) {
+                    Text("Codex (uses the Codex CLI login)")
+                }
+                Defaults.Toggle(key: .aiUsageAntigravity) {
+                    Text("Antigravity (experimental)")
+                }
+            } header: {
+                Text("AI Usage")
+            } footer: {
+                Text("Reads the logins those tools store on this Mac and refreshes every 5 minutes. The usage endpoints are unofficial and can stop working.")
+                    .foregroundStyle(.secondary)
+                    .font(.caption)
+            }
+
+            Section {
+                Defaults.Toggle(key: .downloadAlertsEnabled) {
+                    Text("Show an alert when a download finishes")
+                }
+            } header: {
+                Text("Downloads")
             }
         }
         .accentColor(.effectiveAccent)
