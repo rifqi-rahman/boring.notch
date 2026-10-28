@@ -115,8 +115,15 @@ final class BoringSparkleUpdaterDelegate: NSObject, SPUUpdaterDelegate {
         false
     }
 
+    // Personal fork: never pull upstream builds over this one.
     @objc func feedURLString(for updater: SPUUpdater) -> String? {
-        Defaults[.updateChannel].feedURLString
+        nil
+    }
+
+    func updater(_ updater: SPUUpdater, mayPerform updateCheck: SPUUpdateCheck) throws {
+        throw NSError(domain: "boringNotch.personal", code: 1, userInfo: [
+            NSLocalizedDescriptionKey: "Updates are disabled in this personal build."
+        ])
     }
 
     @objc func allowedChannels(for updater: SPUUpdater) -> Set<String> {

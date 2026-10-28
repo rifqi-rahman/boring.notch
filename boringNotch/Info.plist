@@ -2,22 +2,24 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>BNUpdateChannel</key>
+	<string>stable</string>
 	<key>CFBundleAllowMixedLocalizations</key>
 	<true/>
+	<key>NSAudioCaptureUsageDescription</key>
+	<string>boring.notch analyzes audio from your music app to draw a real-time waveform in the notch. Audio is processed locally and never leaves your Mac.</string>
+	<key>NSBluetoothAlwaysUsageDescription</key>
+	<string>boring.notch reads battery levels of your Bluetooth mice, keyboards and headphones.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>boring.notch monitors and mutes your microphone for the call island and mic mute toggle.</string>
 	<key>SUBundleName</key>
 	<string>Boring Notch</string>
 	<key>SUEnableAutomaticChecks</key>
 	<false/>
-	<key>NSAudioCaptureUsageDescription</key>
-	<string>boring.notch analyzes audio from your music app to draw a real-time waveform in the notch. Audio is processed locally and never leaves your Mac.</string>
-	<key>BNUpdateChannel</key>
-	<string>stable</string>
 	<key>SUEnableDownloaderService</key>
 	<true/>
 	<key>SUEnableInstallerLauncherService</key>
 	<true/>
-	<key>SUFeedURL</key>
-	<string>https://TheBoredTeam.github.io/boring.notch/appcast.xml</string>
 	<key>SUPublicEDKey</key>
 	<string>B1Y47t8C/v8ImurYA+9arEsuCrpxwJSviekiflMElbI=</string>
 	<key>UTImportedTypeDeclarations</key>
