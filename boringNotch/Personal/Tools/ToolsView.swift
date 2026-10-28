@@ -44,7 +44,7 @@ struct ToolTile<Content: View>: View {
 
 // MARK: - Pomodoro
 
-private struct PomodoroTile: View {
+struct PomodoroTile: View {
     @ObservedObject private var pomodoro = PomodoroManager.shared
 
     var body: some View {
@@ -95,7 +95,7 @@ private struct PomodoroTile: View {
 
 // MARK: - Quick toggles
 
-private struct QuickTogglesTile: View {
+struct QuickTogglesTile: View {
     @ObservedObject private var caffeine = CaffeineManager.shared
     @ObservedObject private var mic = MicMuteManager.shared
     @Default(.showAudioOutputPicker) private var showAudioOutputPicker
@@ -191,7 +191,7 @@ private struct AudioOutputRow: View {
 
 // MARK: - System stats
 
-private struct SystemStatsTile: View {
+struct SystemStatsTile: View {
     @ObservedObject private var statsManager = SystemStatsManager.shared
 
     var body: some View {

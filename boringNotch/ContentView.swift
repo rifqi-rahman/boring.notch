@@ -61,7 +61,7 @@ struct ContentView: View {
     /// Compact mode gets a rounder opened shape (35 vs 19) — at its smaller
     /// size the standard radius reads square rather than pill-like.
     private var openedInsets: (top: CGFloat, bottom: CGFloat) {
-        Defaults[.compactMode] ? compactCornerRadiusInsets.opened : cornerRadiusInsets.opened
+        isCompactLayout ? compactCornerRadiusInsets.opened : cornerRadiusInsets.opened
     }
 
     private var topCornerRadius: CGFloat {
@@ -136,17 +136,22 @@ struct ContentView: View {
     /// lever anyway.
     private var openNotchHeight: CGFloat? {
         if notificationManager.activeNotification != nil { return 132 }
-        return Defaults[.compactMode] ? nil : vm.notchSize.height
+        return isCompactLayout ? nil : vm.notchSize.height
     }
 
     /// Compact mode drops the tab bar along with the tabs it switches
     /// between — there's only the player to show, so a switcher would have
     /// nothing to switch to. Also what keeps the panel narrow, since the
     /// header spans the full notch width.
+    /// Compact mode, or the medium hover glance: sized to content, no tabs.
+    private var isCompactLayout: Bool {
+        Defaults[.compactMode] || (vm.notchState == .open && vm.openSize == .medium)
+    }
+
     private var showsHeader: Bool {
         vm.notchState == .open
             && notificationManager.activeNotification == nil
-            && !Defaults[.compactMode]
+            && !isCompactLayout
     }
 
     /// The activity currently on top of the stack — what the chin has to be
@@ -313,6 +318,8 @@ struct ContentView: View {
                     .onTapGesture {
                         if vm.notchState == .closed && !shouldDisplayNowPlayingFallbackNotice {
                             doOpen()
+                        } else if vm.notchState == .open && vm.openSize == .medium {
+                            withAnimation(animationSpring) { vm.openSize = .large }
                         }
                     }
                     .conditionalModifier(Defaults[.enableGestures] && !shouldDisplayNowPlayingFallbackNotice) { view in
@@ -544,6 +551,14 @@ struct ContentView: View {
                     if let notification = notificationManager.activeNotification {
                         NotificationExpandedView(notification: notification)
                             .id(notification.id)
+                    } else if !Defaults[.compactMode] && vm.openSize == .medium {
+                        MediumNotchView(
+                            albumArtNamespace: albumArtNamespace,
+                            horizontalMediaGestureFeedback: horizontalMediaGestureFeedback
+                        )
+                        .onHover { hovering in
+                            isHoveringMusicArea = hovering
+                        }
                     } else if Defaults[.compactMode] {
                         // Player only — no tab switching, so currentView is
                         // ignored here rather than offering a shelf the
@@ -565,6 +580,12 @@ struct ContentView: View {
                     } else {
                         switch coordinator.currentView {
                         case .home:
+                            DashboardView()
+                        case .timer:
+                            TimerView()
+                        case .customize:
+                            CustomizeView()
+                        case .music:
                             NotchHomeView(
                                 albumArtNamespace: albumArtNamespace,
                                 horizontalMediaGestureFeedback: horizontalMediaGestureFeedback,
@@ -576,11 +597,11 @@ struct ContentView: View {
                                 animation: vm.animation
                             )
                         case .tools:
-                            ToolsView()
+                            ToolsTab()
                         case .clipboard:
-                            ClipboardView()
+                            ClipboardTab()
                         case .aiUsage:
-                            AIUsageView()
+                            AIUsageTab()
                         }
                     }
                 }
@@ -813,10 +834,10 @@ struct ContentView: View {
 
 extension ContentView {
     @discardableResult
-    private func doOpen() -> Bool {
+    private func doOpen(size: NotchOpenSize = .large) -> Bool {
         var didOpen = false
         withAnimation(animationSpring) {
-            didOpen = vm.open()
+            didOpen = vm.open(size: size)
         }
         return didOpen
     }
@@ -881,7 +902,7 @@ extension ContentView {
                           !self.shouldDisplayNowPlayingFallbackNotice,
                           !self.coordinator.shouldShowSneakPeek(on: self.vm.screenUUID) else { return }
 
-                    self.doOpen()
+                    self.doOpen(size: Defaults[.hoverOpensMedium] ? .medium : .large)
                 }
             }
         } else {
@@ -1037,10 +1058,10 @@ extension ContentView {
             return coordinator.musicLiveActivityEnabled && (musicManager.isPlaying || !musicManager.isPlayerIdle)
 
         case .open:
-            if Defaults[.compactMode] {
+            if isCompactLayout {
                 return !musicManager.isPlayerIdle && isHoveringMusicArea
             }
-            return coordinator.currentView == .home && !musicManager.isPlayerIdle && isHoveringMusicArea
+            return coordinator.currentView == .music && !musicManager.isPlayerIdle && isHoveringMusicArea
         }
     }
 }

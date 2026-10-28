@@ -27,6 +27,8 @@ final class BoringViewModel: NSObject, ObservableObject {
     @Published var isHoveringCalendar: Bool = false
     /// Keeps the open notch alive while a popover is showing.
     @Published var isPopoverActive: Bool = false
+    /// Medium = hover glance, large = full view with tabs.
+    @Published var openSize: NotchOpenSize = .large
 
     @Published var screenUUID: String?
 
@@ -173,8 +175,9 @@ final class BoringViewModel: NSObject, ObservableObject {
     }
 
     @discardableResult
-    func open() -> Bool {
+    func open(size: NotchOpenSize = .large) -> Bool {
         guard !coordinator.firstLaunch, notchState != .open else { return false }
+        self.openSize = size
 
         self.notchSize = openNotchSize
         self.notchState = .open
@@ -204,11 +207,12 @@ final class BoringViewModel: NSObject, ObservableObject {
 
         // Set the current view to shelf if it contains files and the user enables openShelfByDefault
         // Otherwise, if the user has not enabled openLastShelfByDefault, set the view to home
-        if Defaults[.boringShelf] && !ShelfStateViewModel.shared.isEmpty && Defaults[.openShelfByDefault] {
-            coordinator.currentView = .shelf
-        } else if !coordinator.openLastTabByDefault {
+        // Personal build: always come back to the Home dashboard unless the
+        // user asked to reopen the last tab.
+        if !coordinator.openLastTabByDefault {
             coordinator.currentView = .home
         }
+        openSize = .large
     }
 
     func closeHello() {

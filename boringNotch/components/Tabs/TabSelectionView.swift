@@ -15,14 +15,17 @@ struct TabModel: Identifiable {
     let view: NotchViews
 }
 
-/// Tabs shown in the open notch. Shelf and Tools only appear when enabled.
-var tabs: [TabModel] {
-    var result = [TabModel(label: "Home", icon: "house.fill", view: .home)]
+/// Every tab the open notch can show, in display order. Home is always
+/// first and can't be hidden; the rest follow their feature toggles and the
+/// "…" customize page.
+var allTabs: [TabModel] {
+    var result = [
+        TabModel(label: "Home", icon: "house.fill", view: .home),
+        TabModel(label: "Music", icon: "music.note", view: .music),
+        TabModel(label: "Timer", icon: "timer", view: .timer),
+    ]
     if Defaults[.boringShelf] {
         result.append(TabModel(label: "Shelf", icon: "tray.fill", view: .shelf))
-    }
-    if Defaults[.showToolsTab] {
-        result.append(TabModel(label: "Tools", icon: "square.grid.2x2.fill", view: .tools))
     }
     if Defaults[.clipboardHistoryEnabled] {
         result.append(TabModel(label: "Clipboard", icon: "doc.on.clipboard.fill", view: .clipboard))
@@ -30,7 +33,16 @@ var tabs: [TabModel] {
     if Defaults[.aiUsageEnabled] {
         result.append(TabModel(label: "AI", icon: "gauge.with.dots.needle.67percent", view: .aiUsage))
     }
+    if Defaults[.showToolsTab] {
+        result.append(TabModel(label: "Tools", icon: "square.grid.2x2.fill", view: .tools))
+    }
     return result
+}
+
+/// Tabs shown in the tab bar.
+var tabs: [TabModel] {
+    let hidden = Set(Defaults[.hiddenTabs])
+    return allTabs.filter { $0.view == .home || !hidden.contains($0.label) }
 }
 
 struct TabSelectionView: View {
@@ -59,6 +71,13 @@ struct TabSelectionView: View {
                         }
                     }
             }
+            TabButton(label: "Customize", icon: "ellipsis", selected: coordinator.currentView == .customize) {
+                withAnimation(.smooth) {
+                    coordinator.currentView = coordinator.currentView == .customize ? .home : .customize
+                }
+            }
+            .frame(height: 26)
+            .foregroundStyle(coordinator.currentView == .customize ? .white : .gray)
         }
         .clipShape(Capsule())
     }

@@ -16,7 +16,7 @@ struct BoringHeader: View {
     var body: some View {
         HStack(spacing: 0) {
             HStack {
-                if ((!shelfState.isEmpty || coordinator.alwaysShowTabs) && Defaults[.boringShelf]) || tabs.count > 2 || Defaults[.showToolsTab] {
+                if vm.notchState == .open {
                     TabSelectionView()
                 } else if vm.notchState == .open {
                     EmptyView()
@@ -47,7 +47,7 @@ struct BoringHeader: View {
                         )
                             .transition(.scale(scale: 0.8).combined(with: .opacity))
                     } else {
-                        if Defaults[.showMirror] && coordinator.currentView == .home {
+                        if Defaults[.showMirror] && coordinator.currentView == .music {
                             Button(action: {
                                 vm.toggleCameraPreview()
                             }) {
