@@ -47,13 +47,30 @@ extension AppDelegate {
             }
         }
         Task { @MainActor in
+            for await enabled in Defaults.updates(.deviceBatteryEnabled) {
+                DeviceBatteryManager.shared.setEnabled(enabled)
+            }
+        }
+        Task { @MainActor in
+            for await enabled in Defaults.updates(.hideNotchEnabled) {
+                HideNotchManager.shared.setEnabled(enabled)
+            }
+        }
+        Task { @MainActor in
+            for await enabled in Defaults.updates(.windowSnapEnabled) {
+                WindowSnapManager.shared.setEnabled(enabled)
+            }
+        }
+        Task { @MainActor in
             for await enabled in Defaults.updates(.downloadAlertsEnabled) {
                 DownloadWatcher.shared.setEnabled(enabled)
             }
         }
         Task { @MainActor in
-            for await _ in Defaults.updates([.cameraGuardEnabled, .micGuardEnabled]) {
-                CameraGuardManager.shared.setMonitoring(Defaults[.cameraGuardEnabled] || Defaults[.micGuardEnabled])
+            for await _ in Defaults.updates([.cameraGuardEnabled, .micGuardEnabled, .callIslandEnabled]) {
+                CameraGuardManager.shared.setMonitoring(
+                    Defaults[.cameraGuardEnabled] || Defaults[.micGuardEnabled] || Defaults[.callIslandEnabled])
+                CallIslandManager.shared.setEnabled(Defaults[.callIslandEnabled])
             }
         }
     }

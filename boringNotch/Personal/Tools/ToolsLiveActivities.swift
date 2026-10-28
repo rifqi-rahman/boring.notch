@@ -25,6 +25,8 @@ final class ToolsActivityState: ObservableObject {
     @Published private(set) var micInUse = false
     @Published private(set) var downloadFinished = false
     @Published private(set) var copied = false
+    @Published private(set) var callActive = false
+    @Published private(set) var lowBattery = false
 
     private var cancellables = Set<AnyCancellable>()
 
@@ -37,6 +39,10 @@ final class ToolsActivityState: ObservableObject {
             .sink { [weak self] in self?.cameraInUse = $0 }.store(in: &cancellables)
         CameraGuardManager.shared.$micInUse.removeDuplicates()
             .sink { [weak self] in self?.micInUse = $0 }.store(in: &cancellables)
+        CallIslandManager.shared.$callApp.map { $0 != nil }.removeDuplicates()
+            .sink { [weak self] in self?.callActive = $0 }.store(in: &cancellables)
+        DeviceBatteryManager.shared.$lowDevice.map { $0 != nil }.removeDuplicates()
+            .sink { [weak self] in self?.lowBattery = $0 }.store(in: &cancellables)
         ClipboardHistoryManager.shared.$justCopied.map { $0 != nil }.removeDuplicates()
             .sink { [weak self] in self?.copied = $0 }.store(in: &cancellables)
         DownloadWatcher.shared.$lastFinished.map { $0 != nil }.removeDuplicates()
@@ -51,6 +57,13 @@ final class ToolsActivityState: ObservableObject {
         let camera = cameraInUse && Defaults[.cameraGuardEnabled]
         // A muted mic that is "running" is not a privacy concern.
         let mic = micInUse && !micMuted && Defaults[.micGuardEnabled]
+            && !(callActive && Defaults[.callIslandEnabled])
+        if callActive && Defaults[.callIslandEnabled] {
+            items.append(.call)
+        }
+        if lowBattery && Defaults[.deviceBatteryEnabled] {
+            items.append(.lowDeviceBattery)
+        }
         if copied && Defaults[.clipboardCopiedAlert] {
             items.append(.copied)
         }
@@ -79,6 +92,8 @@ extension LiveActivityItem {
         case .pomodoro: 52
         case .downloadFinished: 30
         case .copied: 52
+        case .call: 58
+        case .lowDeviceBattery: 52
         default: nil
         }
     }
@@ -236,5 +251,56 @@ struct CopiedLiveActivity: View {
         case .image: "photo.fill"
         default: "doc.on.clipboard.fill"
         }
+    }
+}
+
+struct CallLiveActivity: View {
+    @ObservedObject private var call = CallIslandManager.shared
+    @ObservedObject private var mic = MicMuteManager.shared
+    let sideWidth: CGFloat
+
+    var body: some View {
+        ToolLiveActivity(sideWidth: sideWidth) {
+            Button { call.bringAppForward() } label: {
+                if let icon = call.callApp?.icon {
+                    Image(nsImage: icon).resizable().frame(width: 18, height: 18)
+                } else {
+                    Image(systemName: "phone.fill").foregroundStyle(.green)
+                }
+            }
+            .buttonStyle(.plain)
+        } trailing: {
+            Button { mic.toggle() } label: {
+                HStack(spacing: 3) {
+                    Image(systemName: mic.isMuted ? "mic.slash.fill" : "waveform")
+                        .font(.system(size: 9, weight: .bold))
+                    if let start = call.startedAt {
+                        Text(start, style: .timer)
+                            .font(.system(size: 11, weight: .semibold, design: .rounded))
+                            .monospacedDigit()
+                    }
+                }
+                .foregroundStyle(mic.isMuted ? Color.red : Color.green)
+            }
+            .buttonStyle(.plain)
+        }
+    }
+}
+
+struct LowDeviceBatteryLiveActivity: View {
+    @ObservedObject private var batteries = DeviceBatteryManager.shared
+    let sideWidth: CGFloat
+
+    var body: some View {
+        ToolLiveActivity(sideWidth: sideWidth) {
+            Image(systemName: batteries.lowDevice?.symbol ?? "battery.25percent")
+                .font(.system(size: 11, weight: .semibold))
+                .foregroundStyle(.red)
+        } trailing: {
+            Text("\(batteries.lowDevice?.percent ?? 0)%")
+                .font(.system(size: 11, weight: .semibold, design: .rounded))
+                .foregroundStyle(.red)
+        }
+        .help(batteries.lowDevice?.name ?? "")
     }
 }

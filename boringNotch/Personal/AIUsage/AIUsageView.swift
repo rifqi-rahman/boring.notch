@@ -30,7 +30,7 @@ struct AIUsageView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .overlay(alignment: .topTrailing) {
             Button {
-                Task { await manager.refresh() }
+                Task { await manager.userRefresh() }
             } label: {
                 Image(systemName: "arrow.clockwise")
                     .rotationEffect(.degrees(manager.isRefreshing ? 360 : 0))

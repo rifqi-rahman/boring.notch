@@ -49,4 +49,12 @@ extension Defaults.Keys {
 
     // MARK: Download alerts
     static let downloadAlertsEnabled = Key<Bool>("downloadAlertsEnabled", default: true)
+
+    // MARK: Phase 3
+    static let deviceBatteryEnabled = Key<Bool>("deviceBatteryEnabled", default: true)
+    static let deviceBatteryLowThreshold = Key<Int>("deviceBatteryLowThreshold", default: 15)
+    static let callIslandEnabled = Key<Bool>("callIslandEnabled", default: true)
+    static let hideNotchEnabled = Key<Bool>("hideNotchEnabled", default: false)
+    static let hideNotchOriginalWallpapers = Key<[String: String]>("hideNotchOriginalWallpapers", default: [:])
+    static let windowSnapEnabled = Key<Bool>("windowSnapEnabled", default: false)
 }

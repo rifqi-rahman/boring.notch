@@ -15,6 +15,7 @@ struct ToolsSettingsView: View {
     @Default(.pomodoroLongBreakMinutes) private var longBreakMinutes
     @Default(.pomodoroSessionsBeforeLongBreak) private var sessions
     @Default(.clipboardHistoryLimit) private var clipboardLimit
+    @Default(.deviceBatteryLowThreshold) private var lowBattery
     @Default(.caffeineDefaultDuration) private var caffeineDuration
 
     var body: some View {
@@ -127,6 +128,33 @@ struct ToolsSettingsView: View {
                 Text("AI Usage")
             } footer: {
                 Text("Reads the logins those tools store on this Mac and refreshes every 5 minutes. The usage endpoints are unofficial and can stop working.")
+                    .foregroundStyle(.secondary)
+                    .font(.caption)
+            }
+
+            Section {
+                Defaults.Toggle(key: .deviceBatteryEnabled) {
+                    Text("Show mouse, keyboard and headphone batteries")
+                }
+                Stepper("Low battery alert at \(lowBattery)%", value: $lowBattery, in: 5...50, step: 5)
+                Defaults.Toggle(key: .callIslandEnabled) {
+                    Text("Call island while a call app uses the microphone")
+                }
+            } header: {
+                Text("Devices & Calls")
+            }
+
+            Section {
+                Defaults.Toggle(key: .hideNotchEnabled) {
+                    Text("Hide the notch with a black menu bar band")
+                }
+                Defaults.Toggle(key: .windowSnapEnabled) {
+                    Text("Snap windows by dragging them to the notch")
+                }
+            } header: {
+                Text("Screen")
+            } footer: {
+                Text("Hide the notch replaces the wallpaper with a copy that has a black band and restores it when turned off. Dynamic wallpapers become a still image. Window snapping needs Accessibility permission.")
                     .foregroundStyle(.secondary)
                     .font(.caption)
             }
