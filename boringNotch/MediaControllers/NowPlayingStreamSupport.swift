@@ -55,6 +55,29 @@ enum TimedProcessRunner {
         guard process.isRunning else { return }
         _ = kill(process.processIdentifier, SIGKILL)
     }
+
+    /// Kills adapter streams left behind by a previous run that crashed or
+    /// was force-quit. They are re-parented to launchd and otherwise keep
+    /// streaming (and holding memory) forever.
+    static func reapOrphanedAdapters(scriptPath: String) {
+        let pgrep = Process()
+        pgrep.executableURL = URL(fileURLWithPath: "/usr/bin/pgrep")
+        pgrep.arguments = ["-P", "1", "-f", scriptPath]
+        let output = Pipe()
+        pgrep.standardOutput = output
+        pgrep.standardError = FileHandle.nullDevice
+        do {
+            try pgrep.run()
+        } catch {
+            return
+        }
+        pgrep.waitUntilExit()
+        let data = output.fileHandleForReading.readDataToEndOfFile()
+        String(decoding: data, as: UTF8.self)
+            .split(whereSeparator: \.isNewline)
+            .compactMap { pid_t($0) }
+            .forEach { _ = kill($0, SIGKILL) }
+    }
 }
 
 enum NowPlayingError: Error, Sendable { case unavailable }

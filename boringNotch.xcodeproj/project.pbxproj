@@ -325,6 +325,7 @@
 		112FB72F2CCF12CC0015238C /* private */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = private; sourceTree = "<group>"; };
 		11DAAB303061BDED00E15887 /* Settings */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Settings; sourceTree = "<group>"; };
 		11DAAB463061BE1600E15887 /* LiveActivities */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = LiveActivities; sourceTree = "<group>"; };
+		F0F0F0F0A1B2C3D4E5F60001 /* Personal */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Personal; sourceTree = "<group>"; };
 		11DAAB583061BE3000E15887 /* extensions */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = extensions; sourceTree = "<group>"; };
 		11F748502EC9AABA00F841DB /* BoringNotchXPCHelper */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (11F7485C2EC9AABA00F841DB /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = BoringNotchXPCHelper; sourceTree = "<group>"; };
 		8137A8BA990F4D9CBA56CC7A /* Shared */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Shared; sourceTree = "<group>"; };
@@ -643,6 +644,7 @@
 				14D570BA2C5E98E30011E668 /* enums */,
 				14D570B72C5E98960011E668 /* animations */,
 				147163B52C5D804B0068B555 /* managers */,
+				F0F0F0F0A1B2C3D4E5F60001 /* Personal */,
 				1153BD8E2D986B1F00979FB0 /* MediaControllers */,
 				11DAAB583061BE3000E15887 /* extensions */,
 				1471639B2C5D362F0068B555 /* components */,
@@ -831,6 +833,7 @@
 				11DAAB303061BDED00E15887 /* Settings */,
 				11DAAB463061BE1600E15887 /* LiveActivities */,
 				11DAAB583061BE3000E15887 /* extensions */,
+				F0F0F0F0A1B2C3D4E5F60001 /* Personal */,
 				8137A8BA990F4D9CBA56CC7A /* Shared */,
 			);
 			name = boringNotch;

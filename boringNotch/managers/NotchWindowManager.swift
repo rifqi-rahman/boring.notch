@@ -71,6 +71,28 @@ final class NotchWindowManager {
         }
     }
 
+    /// After a long sleep the `com.apple.screenIsUnlocked` distributed
+    /// notification can be missed, which left the windows torn down by
+    /// `screenLocked()` forever (#336). On wake we ask the window server for
+    /// the real lock state and rebuild the windows from scratch.
+    func recoverAfterWake() {
+        guard !Self.isSessionLocked else { return }
+        isScreenLocked = false
+        if Defaults[.showOnLockScreen] {
+            disableSkyLightOnAllWindows()
+        }
+        syncNotchHeightIfNeeded()
+        previousScreens = NSScreen.screens
+        cleanupWindows()
+        adjustWindowPosition(changeAlpha: true)
+        setupDragDetectors()
+    }
+
+    static var isSessionLocked: Bool {
+        guard let session = CGSessionCopyCurrentDictionary() as? [String: Any] else { return false }
+        return (session["CGSSessionScreenIsLocked"] as? Bool) ?? false
+    }
+
     private func enableSkyLightOnAllWindows() {
         if Defaults[.displayMode] == .allDisplays {
             contexts.values.forEach { context in
