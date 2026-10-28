@@ -602,6 +602,8 @@ struct ContentView: View {
                             AudioTab()
                         case .calendar:
                             CalendarTab()
+                        case .calendar:
+                            CalendarTab()
                         case .clipboard:
                             ClipboardTab()
                         case .aiUsage:

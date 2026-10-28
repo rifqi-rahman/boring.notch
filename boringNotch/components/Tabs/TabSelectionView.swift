@@ -43,7 +43,7 @@ var allTabs: [TabModel] {
 
 /// The camera housing covers the middle of the header, so tabs are split:
 /// the first few sit left of the notch, the rest right of it.
-let maxLeftTabs = 6
+let maxLeftTabs = 7
 
 /// Tabs shown in the tab bar.
 var tabs: [TabModel] {

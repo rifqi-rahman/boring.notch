@@ -96,9 +96,10 @@ struct SystemTab: View {
     }
 }
 
-/// Speaker & Camera: output devices, camera mirror and mic mute in one tab.
+/// Input & Output: speakers, camera mirror and microphone in one tab.
 struct AudioTab: View {
     @EnvironmentObject private var vm: BoringViewModel
+    @Default(.isMirrored) private var isMirrored
     @ObservedObject private var routes = AudioRouteManager.shared
     @ObservedObject private var mic = MicMuteManager.shared
     @Default(.cameraGuardEnabled) private var cameraGuard
@@ -136,27 +137,10 @@ struct AudioTab: View {
                         }
                     }
                 }
-                ToolTile {
-                    ZStack {
-                        if vm.camera.isSessionRunning {
-                            CameraPreviewView(camera: vm.camera)
-                                .scaledToFill()
-                                .clipShape(RoundedRectangle(cornerRadius: 10))
-                        } else {
-                            VStack(spacing: 6) {
-                                Image(systemName: "web.camera")
-                                    .font(.system(size: 22))
-                                Text(vm.camera.cameraAvailable ? "Mirror" : "No camera")
-                                    .font(.system(size: 11, weight: .medium))
-                            }
-                            .foregroundStyle(.secondary)
-                        }
-                    }
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                CameraPreviewView(camera: vm.camera)
                     .contentShape(Rectangle())
                     .onTapGesture { vm.toggleCameraPreview() }
-                }
-                .frame(width: 170)
+                    .help(vm.camera.isSessionRunning ? "Stop camera" : "Start camera mirror")
                 ToolTile {
                     VStack(spacing: 8) {
                         Button { mic.toggle() } label: {
@@ -175,7 +159,6 @@ struct AudioTab: View {
                 .frame(width: 110)
             }
             .padding(.top, 4)
-            .padding(.trailing, 30)
             .onAppear { routes.refreshDevices() }
         } settings: {
             HStack(alignment: .top, spacing: 24) {
@@ -186,6 +169,7 @@ struct AudioTab: View {
                 VStack(spacing: 4) {
                     NotchToggle(label: "Call island", isOn: $callIsland)
                     NotchToggle(label: "Show muted mic in notch", isOn: $mutedActivity)
+                    NotchToggle(label: "Mirror camera image", isOn: $isMirrored)
                 }
             }
             .padding(.top, 6)
