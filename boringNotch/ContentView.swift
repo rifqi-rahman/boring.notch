@@ -61,7 +61,7 @@ struct ContentView: View {
     /// Compact mode gets a rounder opened shape (35 vs 19) — at its smaller
     /// size the standard radius reads square rather than pill-like.
     private var openedInsets: (top: CGFloat, bottom: CGFloat) {
-        Defaults[.compactMode] ? compactCornerRadiusInsets.opened : cornerRadiusInsets.opened
+        isCompactLayout ? compactCornerRadiusInsets.opened : cornerRadiusInsets.opened
     }
 
     private var topCornerRadius: CGFloat {
@@ -136,17 +136,22 @@ struct ContentView: View {
     /// lever anyway.
     private var openNotchHeight: CGFloat? {
         if notificationManager.activeNotification != nil { return 132 }
-        return Defaults[.compactMode] ? nil : vm.notchSize.height
+        return isCompactLayout ? nil : vm.notchSize.height
     }
 
     /// Compact mode drops the tab bar along with the tabs it switches
     /// between — there's only the player to show, so a switcher would have
     /// nothing to switch to. Also what keeps the panel narrow, since the
     /// header spans the full notch width.
+    /// Compact mode: sized to content, no tabs.
+    private var isCompactLayout: Bool {
+        Defaults[.compactMode]
+    }
+
     private var showsHeader: Bool {
         vm.notchState == .open
             && notificationManager.activeNotification == nil
-            && !Defaults[.compactMode]
+            && !isCompactLayout
     }
 
     /// The activity currently on top of the stack — what the chin has to be
@@ -565,7 +570,13 @@ struct ContentView: View {
                     } else {
                         switch coordinator.currentView {
                         case .home:
-                            NotchHomeView(
+                            DashboardView()
+                        case .timer:
+                            TimerView()
+                        case .customize:
+                            CustomizeView()
+                        case .music:
+                            MusicTabView(
                                 albumArtNamespace: albumArtNamespace,
                                 horizontalMediaGestureFeedback: horizontalMediaGestureFeedback,
                                 isHoveringMusicArea: $isHoveringMusicArea
@@ -576,11 +587,17 @@ struct ContentView: View {
                                 animation: vm.animation
                             )
                         case .tools:
-                            ToolsView()
+                            SystemTab()
+                        case .audio:
+                            AudioTab()
+                        case .calendar:
+                            CalendarTab()
+                        case .calendar:
+                            CalendarTab()
                         case .clipboard:
-                            ClipboardView()
+                            ClipboardTab()
                         case .aiUsage:
-                            AIUsageView()
+                            AIUsageTab()
                         }
                     }
                 }
@@ -1037,10 +1054,10 @@ extension ContentView {
             return coordinator.musicLiveActivityEnabled && (musicManager.isPlaying || !musicManager.isPlayerIdle)
 
         case .open:
-            if Defaults[.compactMode] {
+            if isCompactLayout {
                 return !musicManager.isPlayerIdle && isHoveringMusicArea
             }
-            return coordinator.currentView == .home && !musicManager.isPlayerIdle && isHoveringMusicArea
+            return coordinator.currentView == .music && !musicManager.isPlayerIdle && isHoveringMusicArea
         }
     }
 }

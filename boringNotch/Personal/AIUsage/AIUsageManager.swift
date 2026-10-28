@@ -17,6 +17,16 @@ final class AIUsageManager: ObservableObject {
 
     @Published private(set) var usage: [ProviderUsage] = []
     @Published private(set) var isRefreshing = false
+    /// Providers whose app or CLI is running right now.
+    @Published private(set) var inUse: Set<AIProvider> = []
+
+    /// Usage for the tools in use; falls back to the busiest one.
+    var activeUsage: [ProviderUsage] {
+        let valid = usage.filter { $0.error == nil }
+        let running = valid.filter { inUse.contains($0.provider) }
+        if !running.isEmpty { return running }
+        return valid.max { $0.peakPercent < $1.peakPercent }.map { [$0] } ?? []
+    }
 
     private var timer: Timer?
     private var lastRefresh: Date?
@@ -67,6 +77,7 @@ final class AIUsageManager: ObservableObject {
             results.append(await fetch(provider))
         }
         usage = results
+        inUse = await Self.runningProviders()
         lastRefresh = Date()
     }
 
@@ -186,6 +197,19 @@ final class AIUsageManager: ObservableObject {
     }
 
     // MARK: Helpers
+
+    /// Which AI tools are running, from process paths.
+    private static func runningProviders() async -> Set<AIProvider> {
+        await Task.detached {
+            let output = (run("/bin/ps", ["-axo", "comm="]) ?? "").lowercased()
+            let names = output.split(separator: "\n").map { ($0 as Substring).split(separator: "/").last.map(String.init) ?? "" }
+            var found = Set<AIProvider>()
+            if names.contains(where: { $0 == "claude" }) { found.insert(.claude) }
+            if names.contains(where: { $0 == "codex" || $0.hasPrefix("codex-") }) { found.insert(.codex) }
+            if output.contains("antigravity") { found.insert(.antigravity) }
+            return found
+        }.value
+    }
 
     struct UsageError: Error {
         let message: String

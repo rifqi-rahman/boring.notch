@@ -204,9 +204,9 @@ final class BoringViewModel: NSObject, ObservableObject {
 
         // Set the current view to shelf if it contains files and the user enables openShelfByDefault
         // Otherwise, if the user has not enabled openLastShelfByDefault, set the view to home
-        if Defaults[.boringShelf] && !ShelfStateViewModel.shared.isEmpty && Defaults[.openShelfByDefault] {
-            coordinator.currentView = .shelf
-        } else if !coordinator.openLastTabByDefault {
+        // Personal build: always come back to the Home dashboard unless the
+        // user asked to reopen the last tab.
+        if !coordinator.openLastTabByDefault {
             coordinator.currentView = .home
         }
     }

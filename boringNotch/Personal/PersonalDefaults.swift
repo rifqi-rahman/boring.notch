@@ -57,4 +57,9 @@ extension Defaults.Keys {
     static let hideNotchEnabled = Key<Bool>("hideNotchEnabled", default: false)
     static let hideNotchOriginalWallpapers = Key<[String: String]>("hideNotchOriginalWallpapers", default: [:])
     static let windowSnapEnabled = Key<Bool>("windowSnapEnabled", default: false)
+
+    // MARK: Notch layout
+    /// Hovering opens the medium glance; clicking opens the large view.
+    static let homeWidgets = Key<[String]>("homeBentoCards", default: ["music", "shortcuts", "calendar", "ai", "todo"])
+    static let hiddenTabs = Key<[String]>("hiddenTabs", default: [])
 }
