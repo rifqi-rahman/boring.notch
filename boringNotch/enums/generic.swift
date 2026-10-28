@@ -27,6 +27,7 @@ enum NotchViews {
     case music
     case timer
     case customize
+    case audio
 }
 
 enum DownloadIndicatorStyle: String, Defaults.Serializable {

@@ -21,6 +21,10 @@ final class ClipboardHistoryManager: ObservableObject {
     private var lastChangeCount = NSPasteboard.general.changeCount
     private var saveTask: Task<Void, Never>?
     private var copiedTask: Task<Void, Never>?
+    private var keyMonitor: Any?
+    /// Last ⌘C / ⌘X. Some apps copy on selection; only a real copy
+    /// keystroke shortly before the change shows the "Copied" alert.
+    private var lastCopyKeystroke = Date.distantPast
     private static let maxTextLength = 100_000
 
     private let directory: URL = {
@@ -41,7 +45,19 @@ final class ClipboardHistoryManager: ObservableObject {
     func setEnabled(_ enabled: Bool) {
         timer?.invalidate()
         timer = nil
+        if let keyMonitor { NSEvent.removeMonitor(keyMonitor) }
+        keyMonitor = nil
         guard enabled else { return }
+        // Global key monitors need Accessibility permission.
+        if Defaults[.clipboardCopiedAlert] && !AXIsProcessTrusted() {
+            let options = [kAXTrustedCheckOptionPrompt.takeUnretainedValue(): true] as CFDictionary
+            _ = AXIsProcessTrustedWithOptions(options)
+        }
+        keyMonitor = NSEvent.addGlobalMonitorForEvents(matching: .keyDown) { event in
+            let key = event.charactersIgnoringModifiers?.lowercased()
+            guard event.modifierFlags.contains(.command), key == "c" || key == "x" else { return }
+            Task { @MainActor in ClipboardHistoryManager.shared.lastCopyKeystroke = Date() }
+        }
         lastChangeCount = NSPasteboard.general.changeCount
         timer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { _ in
             Task { @MainActor in ClipboardHistoryManager.shared.poll() }
@@ -140,6 +156,7 @@ final class ClipboardHistoryManager: ObservableObject {
     private func record(_ entry: ClipboardEntry) {
         deleteFiles(of: history.insert(entry, limit: Defaults[.clipboardHistoryLimit]))
         scheduleSave()
+        guard Date().timeIntervalSince(lastCopyKeystroke) < 1.5 else { return }
         justCopied = history.entries.first
         copiedTask?.cancel()
         copiedTask = Task {

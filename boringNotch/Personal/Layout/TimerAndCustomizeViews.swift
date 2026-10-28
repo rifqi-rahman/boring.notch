@@ -19,20 +19,8 @@ struct TimerView: View {
 
     var body: some View {
         WithInNotchSettings {
-            HStack(spacing: 10) {
-                PomodoroTile()
-                ToolTile {
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text("Focus \(focus) min · Break \(shortBreak) min")
-                        Text("Long break \(longBreak) min every \(sessions)")
-                        Spacer(minLength: 0)
-                    }
-                    .font(.system(size: 12))
-                    .foregroundStyle(.secondary)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                }
-            }
-            .padding(.top, 4)
+            CompactPomodoro(focus: focus, shortBreak: shortBreak, longBreak: longBreak, sessions: sessions)
+                .padding(.trailing, 30)
         } settings: {
             HStack(alignment: .top, spacing: 24) {
                 VStack(spacing: 4) {
@@ -52,18 +40,12 @@ struct TimerView: View {
 }
 
 struct CustomizeView: View {
-    @Default(.homeWidgets) private var homeWidgets
     @Default(.hiddenTabs) private var hiddenTabs
     @Default(.hoverOpensMedium) private var hoverOpensMedium
 
     var body: some View {
         ScrollView(.vertical, showsIndicators: false) {
             VStack(alignment: .leading, spacing: 10) {
-                section("Home widgets (up to 4)") {
-                    chips(HomeWidget.allCases.map { ($0.rawValue, $0.label, $0.icon) },
-                          isOn: { homeWidgets.contains($0) },
-                          toggle: toggleWidget)
-                }
                 section("Tabs") {
                     chips(allTabs.filter { $0.view != .home }.map { ($0.label, $0.label, $0.icon) },
                           isOn: { !hiddenTabs.contains($0) },
@@ -108,14 +90,6 @@ struct CustomizeView: View {
         }
     }
 
-    private func toggleWidget(_ id: String) {
-        if let index = homeWidgets.firstIndex(of: id) {
-            homeWidgets.remove(at: index)
-        } else if homeWidgets.count < 4 {
-            homeWidgets.append(id)
-        }
-    }
-
     private func toggleTab(_ label: String) {
         if let index = hiddenTabs.firstIndex(of: label) {
             hiddenTabs.remove(at: index)
@@ -123,4 +97,67 @@ struct CustomizeView: View {
             hiddenTabs.append(label)
         }
     }
+}
+
+/// One-row Pomodoro: ring, time, controls, session dots and plan.
+private struct CompactPomodoro: View {
+    @ObservedObject private var pomodoro = PomodoroManager.shared
+    let focus: Int
+    let shortBreak: Int
+    let longBreak: Int
+    let sessions: Int
+
+    var body: some View {
+        HStack(spacing: 16) {
+            ZStack {
+                Circle().stroke(Color.white.opacity(0.1), lineWidth: 5)
+                Circle()
+                    .trim(from: 0, to: pomodoro.progress)
+                    .stroke(color, style: StrokeStyle(lineWidth: 5, lineCap: .round))
+                    .rotationEffect(.degrees(-90))
+                    .animation(.linear(duration: 0.5), value: pomodoro.progress)
+                VStack(spacing: 0) {
+                    Text(pomodoro.remainingText)
+                        .font(.system(size: 20, weight: .semibold, design: .rounded))
+                        .monospacedDigit()
+                        .contentTransition(.numericText())
+                    Text(pomodoro.cycle.phase.label)
+                        .font(.system(size: 9, weight: .medium))
+                        .foregroundStyle(color)
+                }
+            }
+            .frame(width: 96, height: 96)
+
+            VStack(alignment: .leading, spacing: 10) {
+                HStack(spacing: 8) {
+                    Button { pomodoro.startOrPause() } label: {
+                        Label(pomodoro.isRunning ? "Pause" : "Start", systemImage: pomodoro.isRunning ? "pause.fill" : "play.fill")
+                            .font(.system(size: 12, weight: .semibold))
+                            .padding(.horizontal, 14)
+                            .frame(height: 30)
+                            .background(Capsule().fill(color))
+                            .foregroundStyle(.black)
+                    }
+                    .buttonStyle(.plain)
+                    NotchIconButton(icon: "forward.end.fill") { pomodoro.skip() }
+                    NotchIconButton(icon: "arrow.counterclockwise") { pomodoro.reset() }
+                }
+                HStack(spacing: 5) {
+                    ForEach(0..<sessions, id: \.self) { index in
+                        Circle()
+                            .fill(index < pomodoro.cycle.completedFocus ? color : Color.white.opacity(0.15))
+                            .frame(width: 7, height: 7)
+                    }
+                }
+                Text("Focus \(focus)m · Break \(shortBreak)m · Long \(longBreak)m")
+                    .font(.system(size: 10))
+                    .foregroundStyle(.secondary)
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(.horizontal, 12)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+    }
+
+    private var color: Color { pomodoro.cycle.phase == .focus ? .effectiveAccent : .green }
 }

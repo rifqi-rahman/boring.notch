@@ -126,7 +126,7 @@ private struct OverviewGlance: View {
                 Text(Date.now.formatted(.dateTime.day().month(.abbreviated)))
                     .font(.system(size: 18, weight: .semibold, design: .rounded))
             }
-            if let usage = ai.usage.first(where: { $0.error == nil }) {
+            if let usage = ai.activeUsage.first {
                 VStack(alignment: .leading, spacing: 3) {
                     Text("\(usage.provider.name) \(Int(usage.peakPercent))%")
                         .font(.system(size: 11, weight: .medium))

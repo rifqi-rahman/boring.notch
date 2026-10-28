@@ -34,10 +34,15 @@ var allTabs: [TabModel] {
         result.append(TabModel(label: "AI", icon: "gauge.with.dots.needle.67percent", view: .aiUsage))
     }
     if Defaults[.showToolsTab] {
-        result.append(TabModel(label: "Tools", icon: "square.grid.2x2.fill", view: .tools))
+        result.append(TabModel(label: "System", icon: "cpu", view: .tools))
+        result.append(TabModel(label: "Audio", icon: "speaker.wave.2.fill", view: .audio))
     }
     return result
 }
+
+/// The camera housing covers the middle of the header, so tabs are split:
+/// the first few sit left of the notch, the rest right of it.
+let maxLeftTabs = 6
 
 /// Tabs shown in the tab bar.
 var tabs: [TabModel] {
@@ -48,38 +53,42 @@ var tabs: [TabModel] {
 struct TabSelectionView: View {
     @ObservedObject var coordinator = BoringViewCoordinator.shared
     @Namespace var animation
+    /// nil = the tabs left of the notch.
+    var side: Side = .left
+
+    enum Side { case left, right }
+
+    private var shownTabs: [TabModel] {
+        side == .left ? Array(tabs.prefix(maxLeftTabs)) : Array(tabs.dropFirst(maxLeftTabs))
+    }
+
     var body: some View {
         HStack(spacing: 0) {
-            ForEach(tabs) { tab in
-                    TabButton(label: tab.label, icon: tab.icon, selected: coordinator.currentView == tab.view) {
-                        withAnimation(.smooth) {
-                            coordinator.currentView = tab.view
-                        }
-                    }
-                    .frame(height: 26)
-                    .foregroundStyle(tab.view == coordinator.currentView ? .white : .gray)
-                    .background {
-                        if tab.view == coordinator.currentView {
-                            Capsule()
-                                .fill(coordinator.currentView == tab.view ? Color(nsColor: .secondarySystemFill) : Color.clear)
-                                .matchedGeometryEffect(id: "capsule", in: animation)
-                        } else {
-                            Capsule()
-                                .fill(coordinator.currentView == tab.view ? Color(nsColor: .secondarySystemFill) : Color.clear)
-                                .matchedGeometryEffect(id: "capsule", in: animation)
-                                .hidden()
-                        }
-                    }
+            ForEach(shownTabs) { tab in
+                tabButton(label: tab.label, icon: tab.icon, view: tab.view)
             }
-            TabButton(label: "Customize", icon: "ellipsis", selected: coordinator.currentView == .customize) {
-                withAnimation(.smooth) {
-                    coordinator.currentView = coordinator.currentView == .customize ? .home : .customize
-                }
+            if side == .right {
+                tabButton(label: "Customize", icon: "ellipsis", view: .customize)
             }
-            .frame(height: 26)
-            .foregroundStyle(coordinator.currentView == .customize ? .white : .gray)
         }
         .clipShape(Capsule())
+    }
+
+    private func tabButton(label: String, icon: String, view: NotchViews) -> some View {
+        let selected = coordinator.currentView == view
+        return TabButton(label: label, icon: icon, selected: selected) {
+            withAnimation(.smooth) {
+                coordinator.currentView = (view == .customize && selected) ? .home : view
+            }
+        }
+        .frame(height: 26)
+        .foregroundStyle(selected ? .white : .gray)
+        .background {
+            Capsule()
+                .fill(selected ? Color(nsColor: .secondarySystemFill) : Color.clear)
+                .matchedGeometryEffect(id: "capsule", in: animation, isSource: selected)
+                .opacity(selected ? 1 : 0)
+        }
     }
 }
 

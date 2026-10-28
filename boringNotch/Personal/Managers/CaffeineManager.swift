@@ -32,6 +32,16 @@ final class CaffeineManager: ObservableObject {
             case .hours2: "2 hours"
             }
         }
+
+        var shortLabel: String {
+            switch self {
+            case .indefinite: "∞"
+            case .minutes15: "15m"
+            case .minutes30: "30m"
+            case .hour1: "1h"
+            case .hours2: "2h"
+            }
+        }
     }
 
     @Published private(set) var isActive = false

@@ -15,50 +15,30 @@ enum NotchOpenSize {
     case medium, large
 }
 
-/// Widgets the Home dashboard can show, configured from the "…" page.
+/// Cards the Home bento can show, picked from Home's Edit gear.
 enum HomeWidget: String, CaseIterable, Identifiable {
-    case music, timer, ai, calendar, stats, clipboard, devices
+    case music, shortcuts, calendar, ai, todo
 
     var id: String { rawValue }
 
     var label: String {
         switch self {
-        case .music: "Music"
-        case .timer: "Timer"
-        case .ai: "AI Usage"
+        case .music: "Now Playing"
+        case .shortcuts: "Shortcuts"
         case .calendar: "Calendar"
-        case .stats: "CPU & Memory"
-        case .clipboard: "Clipboard"
-        case .devices: "Device Batteries"
+        case .ai: "AI Usage"
+        case .todo: "To-Do"
         }
     }
 
     var icon: String {
         switch self {
         case .music: "music.note"
-        case .timer: "timer"
-        case .ai: "gauge.with.dots.needle.67percent"
+        case .shortcuts: "square.grid.2x2"
         case .calendar: "calendar"
-        case .stats: "cpu"
-        case .clipboard: "doc.on.clipboard"
-        case .devices: "computermouse"
+        case .ai: "gauge.with.dots.needle.67percent"
+        case .todo: "checklist"
         }
-    }
-
-    /// Tab opened when the widget is tapped.
-    var destination: NotchViews? {
-        switch self {
-        case .music: .music
-        case .timer: .timer
-        case .ai: .aiUsage
-        case .clipboard: .clipboard
-        case .stats, .devices: .tools
-        case .calendar: .music
-        }
-    }
-
-    static var enabled: [HomeWidget] {
-        Defaults[.homeWidgets].compactMap(HomeWidget.init(rawValue:))
     }
 }
 

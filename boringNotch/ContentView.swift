@@ -586,7 +586,7 @@ struct ContentView: View {
                         case .customize:
                             CustomizeView()
                         case .music:
-                            NotchHomeView(
+                            MusicTabView(
                                 albumArtNamespace: albumArtNamespace,
                                 horizontalMediaGestureFeedback: horizontalMediaGestureFeedback,
                                 isHoveringMusicArea: $isHoveringMusicArea
@@ -597,7 +597,9 @@ struct ContentView: View {
                                 animation: vm.animation
                             )
                         case .tools:
-                            ToolsTab()
+                            SystemTab()
+                        case .audio:
+                            AudioTab()
                         case .clipboard:
                             ClipboardTab()
                         case .aiUsage:
