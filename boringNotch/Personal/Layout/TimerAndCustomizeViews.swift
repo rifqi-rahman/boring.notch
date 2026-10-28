@@ -41,7 +41,6 @@ struct TimerView: View {
 
 struct CustomizeView: View {
     @Default(.hiddenTabs) private var hiddenTabs
-    @Default(.hoverOpensMedium) private var hoverOpensMedium
 
     var body: some View {
         ScrollView(.vertical, showsIndicators: false) {
@@ -51,8 +50,6 @@ struct CustomizeView: View {
                           isOn: { !hiddenTabs.contains($0) },
                           toggle: toggleTab)
                 }
-                NotchToggle(label: "Hovering shows a compact glance (click for full view)", isOn: $hoverOpensMedium)
-                    .frame(maxWidth: 420)
             }
             .padding(.top, 4)
             .frame(maxWidth: .infinity, alignment: .leading)

@@ -143,9 +143,9 @@ struct ContentView: View {
     /// between — there's only the player to show, so a switcher would have
     /// nothing to switch to. Also what keeps the panel narrow, since the
     /// header spans the full notch width.
-    /// Compact mode, or the medium hover glance: sized to content, no tabs.
+    /// Compact mode: sized to content, no tabs.
     private var isCompactLayout: Bool {
-        Defaults[.compactMode] || (vm.notchState == .open && vm.openSize == .medium)
+        Defaults[.compactMode]
     }
 
     private var showsHeader: Bool {
@@ -318,8 +318,6 @@ struct ContentView: View {
                     .onTapGesture {
                         if vm.notchState == .closed && !shouldDisplayNowPlayingFallbackNotice {
                             doOpen()
-                        } else if vm.notchState == .open && vm.openSize == .medium {
-                            withAnimation(animationSpring) { vm.openSize = .large }
                         }
                     }
                     .conditionalModifier(Defaults[.enableGestures] && !shouldDisplayNowPlayingFallbackNotice) { view in
@@ -551,14 +549,6 @@ struct ContentView: View {
                     if let notification = notificationManager.activeNotification {
                         NotificationExpandedView(notification: notification)
                             .id(notification.id)
-                    } else if !Defaults[.compactMode] && vm.openSize == .medium {
-                        MediumNotchView(
-                            albumArtNamespace: albumArtNamespace,
-                            horizontalMediaGestureFeedback: horizontalMediaGestureFeedback
-                        )
-                        .onHover { hovering in
-                            isHoveringMusicArea = hovering
-                        }
                     } else if Defaults[.compactMode] {
                         // Player only — no tab switching, so currentView is
                         // ignored here rather than offering a shelf the
@@ -840,10 +830,10 @@ struct ContentView: View {
 
 extension ContentView {
     @discardableResult
-    private func doOpen(size: NotchOpenSize = .large) -> Bool {
+    private func doOpen() -> Bool {
         var didOpen = false
         withAnimation(animationSpring) {
-            didOpen = vm.open(size: size)
+            didOpen = vm.open()
         }
         return didOpen
     }
@@ -908,7 +898,7 @@ extension ContentView {
                           !self.shouldDisplayNowPlayingFallbackNotice,
                           !self.coordinator.shouldShowSneakPeek(on: self.vm.screenUUID) else { return }
 
-                    self.doOpen(size: Defaults[.hoverOpensMedium] ? .medium : .large)
+                    self.doOpen()
                 }
             }
         } else {

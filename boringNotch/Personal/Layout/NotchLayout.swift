@@ -11,10 +11,6 @@
 import Defaults
 import SwiftUI
 
-enum NotchOpenSize {
-    case medium, large
-}
-
 /// Cards the Home bento can show, picked from Home's Edit gear.
 enum HomeWidget: String, CaseIterable, Identifiable {
     case music, shortcuts, calendar, ai, todo

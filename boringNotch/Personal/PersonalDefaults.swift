@@ -60,7 +60,6 @@ extension Defaults.Keys {
 
     // MARK: Notch layout
     /// Hovering opens the medium glance; clicking opens the large view.
-    static let hoverOpensMedium = Key<Bool>("hoverOpensMedium", default: true)
     static let homeWidgets = Key<[String]>("homeBentoCards", default: ["music", "shortcuts", "calendar", "ai", "todo"])
     static let hiddenTabs = Key<[String]>("hiddenTabs", default: [])
 }

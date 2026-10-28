@@ -27,8 +27,6 @@ final class BoringViewModel: NSObject, ObservableObject {
     @Published var isHoveringCalendar: Bool = false
     /// Keeps the open notch alive while a popover is showing.
     @Published var isPopoverActive: Bool = false
-    /// Medium = hover glance, large = full view with tabs.
-    @Published var openSize: NotchOpenSize = .large
 
     @Published var screenUUID: String?
 
@@ -175,9 +173,8 @@ final class BoringViewModel: NSObject, ObservableObject {
     }
 
     @discardableResult
-    func open(size: NotchOpenSize = .large) -> Bool {
+    func open() -> Bool {
         guard !coordinator.firstLaunch, notchState != .open else { return false }
-        self.openSize = size
 
         self.notchSize = openNotchSize
         self.notchState = .open
@@ -212,7 +209,6 @@ final class BoringViewModel: NSObject, ObservableObject {
         if !coordinator.openLastTabByDefault {
             coordinator.currentView = .home
         }
-        openSize = .large
     }
 
     func closeHello() {
