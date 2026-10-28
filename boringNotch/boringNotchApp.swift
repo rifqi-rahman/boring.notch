@@ -145,6 +145,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var screenLockedObserver: Any?
     private var screenUnlockedObserver: Any?
     private var observers: [Any] = []
+    private var workspaceObservers: [Any] = []
     private var activeDisplayObserver: NSObjectProtocol?
     private var displayModeTask: Task<Void, Never>?
     private var observedDisplayMode: DisplayMode?
@@ -171,6 +172,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationWillTerminate(_ notification: Notification) {
         if LegacyAppBundleMigration.isRelaunching { return }
 
+        // Don't leave the mic silenced system-wide after we're gone.
+        MainActor.assumeIsolated {
+            if MicMuteManager.shared.isMuted { MicMuteManager.shared.setMuted(false) }
+        }
+
         // Flush debounced shelf persistence to avoid losing recent changes
         ShelfStateViewModel.shared.flushSync()
 
@@ -193,6 +199,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         XPCHelperClient.shared.stopMonitoringAccessibilityAuthorization()
 
         observers.forEach { NotificationCenter.default.removeObserver($0) }
+        workspaceObservers.forEach { NSWorkspace.shared.notificationCenter.removeObserver($0) }
+        workspaceObservers.removeAll()
         observers.removeAll()
 
         displayModeTask?.cancel()
@@ -246,6 +254,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             }
         })
 
+        // Rebuild the notch after wake / fast user switching; see recoverAfterWake (#336).
+        for name in [NSWorkspace.didWakeNotification, NSWorkspace.screensDidWakeNotification, NSWorkspace.sessionDidBecomeActiveNotification] {
+            workspaceObservers.append(NSWorkspace.shared.notificationCenter.addObserver(
+                forName: name, object: nil, queue: .main
+            ) { [weak self] _ in
+                Task { @MainActor in
+                    try? await Task.sleep(for: .seconds(1.5))
+                    self?.windowManager.recoverAfterWake()
+                }
+            })
+        }
+
         // Use closure-based observers for DistributedNotificationCenter and keep tokens for removal
         screenLockedObserver = DistributedNotificationCenter.default().addObserver(
             forName: NSNotification.Name(rawValue: "com.apple.screenIsLocked"),
@@ -262,6 +282,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                     self?.onScreenUnlocked(notification)
                 }
         }
+
+        setupToolsFeatures()
 
         KeyboardShortcuts.onKeyDown(for: .toggleSneakPeek) { [weak self] in
             guard let self = self else { return }

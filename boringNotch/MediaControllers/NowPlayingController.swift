@@ -187,6 +187,7 @@ final class NowPlayingController: NowPlayingRuntimeControlling {
     // MARK: - Runtime Stream Lifecycle
     func startRuntimeStream() {
         guard streamSession == nil else { return }
+        TimedProcessRunner.reapOrphanedAdapters(scriptPath: adapterScriptURL.path)
 
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/usr/bin/perl")

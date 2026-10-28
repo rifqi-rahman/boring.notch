@@ -28,6 +28,13 @@ struct ShortcutsSettingsView: View {
                 .foregroundStyle(.secondary)
                 .font(.caption)
             }
+            Section {
+                KeyboardShortcuts.Recorder("Toggle Mic Mute:", name: .toggleMicMute)
+                KeyboardShortcuts.Recorder("Toggle Caffeine:", name: .toggleCaffeine)
+                KeyboardShortcuts.Recorder("Start/Pause Pomodoro:", name: .togglePomodoro)
+            } header: {
+                Text("Tools")
+            }
         }
         .accentColor(.effectiveAccent)
         .navigationTitle("Shortcuts")
